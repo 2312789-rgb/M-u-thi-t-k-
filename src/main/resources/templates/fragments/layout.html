@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title th:text="${title + ' | ' + storeName}">Mặc Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/site.css}"><link rel="stylesheet" th:href="@{/css/account.css}"><link rel="stylesheet" th:href="@{/css/modern.css}">
+</head>
+<body>
+<div th:fragment="header" class="site-chrome">
+    <div class="announcement">BỘ SƯU TẬP MỚI · FREESHIP CHO ĐƠN TỪ 799K</div>
+    <header class="site-header">
+        <a class="wordmark" th:href="@{/}">MẶC<span>STUDIO</span></a>
+        <nav class="main-nav" aria-label="Điều hướng chính"><a th:href="@{/}">Trang chủ</a><a th:href="@{/products}">Sản phẩm</a><a th:href="@{/products(categoryId=1)}">Bộ sưu tập</a><a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}">Quản trị</a></nav>
+        <div class="header-actions">
+            <form class="header-search" th:action="@{/products}" method="get"><i class="fa-solid fa-magnifying-glass"></i><input name="q" placeholder="Tìm sản phẩm" aria-label="Tìm sản phẩm"></form>
+            <a class="header-icon notification-link" sec:authorize="isAuthenticated()" th:href="@{/notifications}" title="Thông báo" aria-label="Thông báo">
+                <i class="fa-regular fa-bell"></i><span class="notification-count" th:if="${notificationCount > 0}" th:text="${notificationCount > 99 ? '99+' : notificationCount}"></span>
+            </a>
+            <a class="header-icon account-link" sec:authorize="isAuthenticated()" th:href="@{/account/profile}" title="Tài khoản"><i class="fa-regular fa-user"></i><span>Tài khoản</span></a>
+            <a class="header-icon" sec:authorize="!isAuthenticated()" th:href="@{/account/login}" title="Đăng nhập"><i class="fa-regular fa-user"></i></a>
+            <form sec:authorize="isAuthenticated()" th:action="@{/account/logout}" method="post"><button class="header-icon" title="Đăng xuất"><i class="fa-solid fa-arrow-right-from-bracket"></i></button></form>
+            <a class="header-icon cart-link" th:href="@{/cart}" title="Giỏ hàng"><i class="fa-solid fa-bag-shopping"></i><span class="cart-count" th:text="${cartCount}">0</span></a>
+        </div>
+    </header>
+    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div><div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+</div>
+<footer th:fragment="footer" class="site-footer"><div><a class="wordmark footer-mark" th:href="@{/}">MẶC<span>STUDIO</span></a><p>Trang phục có chủ đích, dành cho những ngày thật của bạn.</p></div><div class="footer-links"><a th:href="@{/products}">Khám phá sản phẩm</a><a th:href="@{/orders}" sec:authorize="hasRole('CUSTOMER')">Tra cứu đơn hàng</a><span>TP. Hồ Chí Minh · 09:00–21:00</span></div><small>© 2026 Mặc Studio</small></footer>
+</body></html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Thông báo')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: header}"></div>
+<main>
+    <section class="page-width content-page notifications-page">
+        <div class="catalog-heading">
+            <div><span class="eyebrow">CẬP NHẬT MỚI NHẤT</span><h1>Thông báo</h1></div>
+            <form th:if="${!notifications.isEmpty()}" th:action="@{/notifications/read-all}" method="post">
+                <button class="text-link notification-mark-all">Đánh dấu đã đọc</button>
+            </form>
+        </div>
+        <div th:if="${notifications.isEmpty()}" class="empty-state">
+            <i class="fa-regular fa-bell"></i><h2>Bạn chưa có thông báo</h2>
+            <p>Khi đơn hàng có cập nhật, thông tin sẽ hiển thị tại đây.</p>
+        </div>
+        <div th:unless="${notifications.isEmpty()}" class="notification-list">
+            <article class="notification-card" th:each="notification : ${notifications}" th:classappend="${notification.read ? '' : ' notification-unread'}">
+                <span class="notification-icon"><i class="fa-solid fa-box"></i></span>
+                <div class="notification-copy">
+                    <p th:text="${notification.message}"></p>
+                    <time th:datetime="${notification.createdAt}" th:text="${#temporals.format(notification.createdAt,'dd/MM/yyyy HH:mm')}"></time>
+                </div>
+                <span class="notification-new" th:if="${!notification.read}">Mới</span>
+                <form th:action="@{/notifications/{id}/read(id=${notification.id})}" method="post">
+                    <button class="notification-open" th:text="${currentRole == 'ROLE_ADMIN' ? 'Mở đơn hàng' : 'Xem đơn hàng'}"></button>
+                </form>
+            </article>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

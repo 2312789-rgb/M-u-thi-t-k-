@@ -1,0 +1,6 @@
+<article class="product-card" xmlns:th="http://www.thymeleaf.org" th:fragment="card(product)">
+    <a class="product-image" th:href="@{/products/{id}(id=${product.id})}"><img th:src="${product.imageUrl}" th:alt="${product.name}" loading="lazy"><span class="product-label" th:if="${product.quantity > 0 and product.quantity <= 5}">Sắp hết</span><span class="product-label sold-out" th:if="${product.quantity == 0}">Hết hàng</span></a>
+    <div class="product-meta"><span th:text="${product.category.name}">Danh mục</span><span th:text="${product.size + ' · ' + product.color}">Size · màu</span></div>
+    <a class="product-name" th:href="@{/products/{id}(id=${product.id})}" th:text="${product.name}">Sản phẩm</a>
+    <div class="product-bottom"><strong th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT') + ' đ'}">0 đ</strong><form th:if="${product.quantity > 0 and product.status == 'Đang bán'}" th:action="@{/cart/add}" method="post"><input type="hidden" name="id" th:value="${product.id}"><button class="quick-add" title="Thêm vào giỏ"><i class="fa-solid fa-plus"></i></button></form></div>
+</article>
