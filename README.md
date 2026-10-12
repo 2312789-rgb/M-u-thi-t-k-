@@ -63,6 +63,48 @@ Profile `render` tắt H2 Console và các tài khoản/đơn hàng mẫu khách
 
 **Lưu ý hiện trạng repository:** để Render tự động deploy, cần có GitHub repository riêng chứa `java-version` và kết nối tài khoản Render của bạn. Không commit/push cả thư mục `C:\Users\PC` hoặc thư mục Downloads. Mình không thể đăng nhập/tạo service bên thứ ba thay bạn; sau khi Render cấp hostname, gửi hostname đó cho người xem.
 
+## Đăng nhập bằng Google và Apple
+
+Đăng nhập xã hội chỉ hoạt động sau khi tạo ứng dụng OAuth ở Google/Apple và cấu hình biến môi trường. Không commit Client Secret, Apple `.p8` key hay Apple client-secret JWT lên GitHub. Nút của nhà cung cấp chưa cấu hình sẽ ở trạng thái tắt trên trang đăng nhập.
+
+### Google
+
+1. Trong Google Cloud Console, tạo/chọn project, cấu hình OAuth consent screen và tạo **OAuth client ID → Web application**.
+2. Thêm Authorized JavaScript origin cho từng host, ví dụ `http://localhost:5128` và `https://<ten-service>.onrender.com`.
+3. Thêm Authorized redirect URI tương ứng: `http://localhost:5128/login/oauth2/code/google` và `https://<ten-service>.onrender.com/login/oauth2/code/google`.
+4. Đặt `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET` trong environment của ứng dụng. Nếu consent screen còn ở Testing, thêm email Google thử nghiệm vào danh sách Test users.
+
+### Apple
+
+Sign in with Apple trên website yêu cầu Apple Developer account, App ID bật Sign in with Apple, **Services ID**, Sign in with Apple private key (`.p8`) và một domain HTTPS đã xác minh. `localhost` không dùng làm Return URL Apple; hãy cấu hình và thử Apple sau khi có hostname HTTPS, chẳng hạn Render.
+
+1. Trong Apple Developer, bật Sign in with Apple cho App ID, sau đó tạo Services ID cho website.
+2. Cấu hình domain/return URL của Services ID. Return URL phải trùng tuyệt đối với `https://<ten-service>.onrender.com/login/oauth2/code/apple`. Hoàn thành bước verify domain của Apple nếu Developer portal yêu cầu.
+3. Tạo Sign in with Apple key, ghi lại Team ID, Key ID, Services ID và tải file `.p8`. Lưu file key ngoài repository.
+4. Với Node.js đã cài, chạy trong CMD tại thư mục `java-version` để tạo client secret ký từ key của bạn (JWT hết hạn sau 180 ngày):
+
+   ```cmd
+   node tools\generate-apple-client-secret.cjs TEAMID1234 KEYID5678 vn.macstudio.web "C:\duong-dan-an-toan\AuthKey_KEYID5678.p8"
+   ```
+
+   Thay các giá trị ví dụ bằng Team ID, Key ID và Services ID thật của bạn.
+
+5. Đặt `APPLE_CLIENT_ID` bằng Services ID và `APPLE_CLIENT_SECRET` bằng JWT vừa tạo trong environment của ứng dụng. Khi JWT hết hạn, tạo secret mới và cập nhật biến môi trường.
+
+### Cấu hình local hoặc Render
+
+Trong CMD, đặt biến môi trường trước khi chạy ứng dụng (thay giá trị bằng credential của bạn, không gửi chúng vào chat):
+
+```cmd
+set "GOOGLE_CLIENT_ID=your-google-client-id"
+set "GOOGLE_CLIENT_SECRET=your-google-client-secret"
+set "APPLE_CLIENT_ID=your-apple-services-id"
+set "APPLE_CLIENT_SECRET=paste-the-generated-apple-jwt-here"
+java-version\mvnw.cmd -f java-version\pom.xml spring-boot:run
+```
+
+Nếu chạy từ `java-version`, dùng `.\mvnw.cmd spring-boot:run` trong PowerShell sau khi đặt cùng các biến môi trường. Trên Render, thêm các biến ở **Environment** rồi redeploy. Callback Apple dùng `form_post`; profile `render` bật cookie Secure/SameSite=None để phiên đăng nhập OAuth được giữ qua callback. OAuth mới tự tạo tài khoản khách hàng cho email đã xác thực hoặc liên kết an toàn với tài khoản khách hàng có cùng email. Tài khoản quản trị không thể đăng nhập qua nhà cung cấp xã hội.
+
 ## Báo cáo và sơ đồ
 
 - Báo cáo nền đồ án, hướng dẫn demo và giới hạn triển khai: [FINAL_PROJECT_REPORT.md](FINAL_PROJECT_REPORT.md).
@@ -79,6 +121,7 @@ Profile `render` tắt H2 Console và các tài khoản/đơn hàng mẫu khách
 
 - Trang chủ, catalog tìm/lọc theo tên, danh mục, size, màu, khoảng giá và sắp xếp.
 - Đăng ký/đăng nhập bằng BCrypt, role Admin/Customer, hồ sơ khách hàng.
+- Chat hỗ trợ lưu lịch sử giữa khách hàng và đội ngũ quản trị, tự gửi lời chào khi mở chat lần đầu, cảnh báo tin nhắn chưa đọc cho cả hai phía và tự làm mới mỗi 4 giây.
 - Session cart, kiểm tra tồn kho, checkout transactional, snapshot giá, confirmation và lịch sử đơn.
 - Thông báo lưu trong database: khách hàng nhận cập nhật trạng thái đơn; admin nhận thông báo đơn mới và trạng thái thay đổi; badge số chưa đọc và trang đánh dấu đã đọc.
 - Admin dashboard, CRUD sản phẩm/danh mục/khách hàng, upload ảnh, quản lý trạng thái đơn; hủy đơn hoàn kho.

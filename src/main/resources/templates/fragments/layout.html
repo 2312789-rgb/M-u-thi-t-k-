@@ -6,7 +6,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" th:href="@{/css/site.css}"><link rel="stylesheet" th:href="@{/css/account.css}"><link rel="stylesheet" th:href="@{/css/modern.css}">
+    <link rel="stylesheet" th:href="@{/css/site.css}"><link rel="stylesheet" th:href="@{/css/account.css}"><link rel="stylesheet" th:href="@{/css/modern.css}"><link rel="stylesheet" th:href="@{/css/chat.css}"><link rel="stylesheet" th:href="@{/css/social-login.css}">
 </head>
 <body>
 <div th:fragment="header" class="site-chrome">
@@ -19,6 +19,12 @@
             <a class="header-icon notification-link" sec:authorize="isAuthenticated()" th:href="@{/notifications}" title="Thông báo" aria-label="Thông báo">
                 <i class="fa-regular fa-bell"></i><span class="notification-count" th:if="${notificationCount > 0}" th:text="${notificationCount > 99 ? '99+' : notificationCount}"></span>
             </a>
+            <a class="header-icon" sec:authorize="isAuthenticated()" th:href="@{/chat}" title="Chat hỗ trợ">
+                <i class="fa-regular fa-comments"></i><span>Chat</span>
+                <span class="notification-count chat-header-count" data-chat-header-count sec:authorize="isAuthenticated()"
+                      th:classappend="${chatUnreadCount == 0 ? ' is-empty' : ''}"
+                      th:text="${chatUnreadCount > 99 ? '99+' : chatUnreadCount}">0</span>
+            </a>
             <a class="header-icon account-link" sec:authorize="isAuthenticated()" th:href="@{/account/profile}" title="Tài khoản"><i class="fa-regular fa-user"></i><span>Tài khoản</span></a>
             <a class="header-icon" sec:authorize="!isAuthenticated()" th:href="@{/account/login}" title="Đăng nhập"><i class="fa-regular fa-user"></i></a>
             <form sec:authorize="isAuthenticated()" th:action="@{/account/logout}" method="post"><button class="header-icon" title="Đăng xuất"><i class="fa-solid fa-arrow-right-from-bracket"></i></button></form>
@@ -27,5 +33,5 @@
     </header>
     <div th:if="${success}" class="flash flash-success" th:text="${success}"></div><div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
 </div>
-<footer th:fragment="footer" class="site-footer"><div><a class="wordmark footer-mark" th:href="@{/}">MẶC<span>STUDIO</span></a><p>Trang phục có chủ đích, dành cho những ngày thật của bạn.</p></div><div class="footer-links"><a th:href="@{/products}">Khám phá sản phẩm</a><a th:href="@{/orders}" sec:authorize="hasRole('CUSTOMER')">Tra cứu đơn hàng</a><span>TP. Hồ Chí Minh · 09:00–21:00</span></div><small>© 2026 Mặc Studio</small></footer>
+<footer th:fragment="footer" class="site-footer"><div><a class="wordmark footer-mark" th:href="@{/}">MẶC<span>STUDIO</span></a><p>Trang phục có chủ đích, dành cho những ngày thật của bạn.</p></div><div class="footer-links"><a th:href="@{/products}">Khám phá sản phẩm</a><a th:href="@{/orders}" sec:authorize="hasRole('CUSTOMER')">Tra cứu đơn hàng</a><span>TP. Hồ Chí Minh · 09:00–21:00</span></div><small>© 2026 Mặc Studio</small><script sec:authorize="isAuthenticated()" th:src="@{/js/chat-notifications.js}" defer></script></footer>
 </body></html>

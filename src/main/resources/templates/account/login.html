@@ -1,1 +1,58 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/layout :: head('Đăng nhập')}"></head><body><div th:replace="~{fragments/layout :: header}"></div><main><section class="auth-page"><div class="auth-image"></div><div class="auth-panel"><span class="eyebrow">RẤT VUI ĐƯỢC GẶP LẠI</span><h1>Đăng nhập</h1><p>Tiếp tục hành trình tìm món đồ dành cho bạn.</p><p class="flash flash-success" th:if="${param.registered}">Tạo tài khoản thành công. Hãy đăng nhập.</p><p class="validation-summary" th:if="${param.error}">Email hoặc mật khẩu chưa chính xác.</p><form th:action="@{/account/login}" method="post"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required><label for="password">Mật khẩu</label><input id="password" name="password" type="password" autocomplete="current-password" required><label class="check-line"><input type="checkbox" name="remember-me"> Ghi nhớ đăng nhập</label><button class="button button-dark button-block">Đăng nhập</button></form><div class="auth-switch">Chưa có tài khoản? <a th:href="@{/account/register}">Đăng ký</a></div></div></section></main><footer th:replace="~{fragments/layout :: footer}"></footer></body></html>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Đăng nhập')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: header}"></div>
+<main>
+    <section class="auth-page">
+        <div class="auth-image"></div>
+        <div class="auth-panel">
+            <span class="eyebrow">RẤT VUI ĐƯỢC GẶP LẠI</span>
+            <h1>Đăng nhập</h1>
+            <p>Tiếp tục hành trình tìm món đồ dành cho bạn.</p>
+            <p class="flash flash-success" th:if="${param.registered}">Tạo tài khoản thành công. Hãy đăng nhập.</p>
+            <p class="validation-summary" th:if="${param.error}">Email hoặc mật khẩu chưa chính xác.</p>
+            <p class="validation-summary" th:if="${param.oauthError}">
+                Không thể đăng nhập bằng Google hoặc Apple. Hãy kiểm tra tài khoản và thử lại.
+            </p>
+            <div class="social-login-options">
+                <a class="social-login-button social-login-google" th:if="${googleLoginEnabled}"
+                   th:href="@{/oauth2/authorization/google}">
+                    <i class="fa-brands fa-google" aria-hidden="true"></i>
+                    <span>Tiếp tục với Google</span>
+                </a>
+                <button class="social-login-button social-login-google" th:unless="${googleLoginEnabled}"
+                        type="button" disabled title="Cần cấu hình Google OAuth trước khi sử dụng">
+                    <i class="fa-brands fa-google" aria-hidden="true"></i>
+                    <span>Tiếp tục với Google</span>
+                </button>
+                <a class="social-login-button social-login-apple" th:if="${appleLoginEnabled}"
+                   th:href="@{/oauth2/authorization/apple}">
+                    <i class="fa-brands fa-apple" aria-hidden="true"></i>
+                    <span>Tiếp tục với Apple</span>
+                </a>
+                <button class="social-login-button social-login-apple" th:unless="${appleLoginEnabled}"
+                        type="button" disabled title="Cần cấu hình Apple OAuth trước khi sử dụng">
+                    <i class="fa-brands fa-apple" aria-hidden="true"></i>
+                    <span>Tiếp tục với Apple</span>
+                </button>
+                <div class="social-login-divider"><span>Hoặc đăng nhập bằng email</span></div>
+                <p class="social-login-notice" th:if="${!googleLoginEnabled || !appleLoginEnabled}">
+                    Nút nhà cung cấp chưa cấu hình sẽ được bật sau khi thêm OAuth credentials.
+                </p>
+            </div>
+            <form th:action="@{/account/login}" method="post">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" autocomplete="email" required>
+                <label for="password">Mật khẩu</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required>
+                <label class="check-line"><input type="checkbox" name="remember-me"> Ghi nhớ đăng nhập</label>
+                <button class="button button-dark button-block">Đăng nhập</button>
+            </form>
+            <div class="auth-switch">Chưa có tài khoản? <a th:href="@{/account/register}">Đăng ký</a></div>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

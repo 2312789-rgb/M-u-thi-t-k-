@@ -1,1 +1,62 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/layout :: head('Giỏ hàng')}"></head><body><div th:replace="~{fragments/layout :: header}"></div><main><section class="page-width content-page"><div class="catalog-heading"><div><span class="eyebrow">SẮP THÀNH CỦA BẠN</span><h1>Giỏ hàng <small th:text="'(' + ${cart.size()} + ')'">(0)</small></h1></div></div><div th:if="${cart.isEmpty()}" class="empty-state"><i class="fa-solid fa-bag-shopping"></i><h2>Giỏ hàng đang trống</h2><p>Một món đồ hợp với bạn đang chờ ở đây.</p><a class="button button-dark" th:href="@{/products}">Tiếp tục mua sắm</a></div><div th:unless="${cart.isEmpty()}" class="cart-layout"><div class="cart-lines"><div class="cart-table-head"><span>Sản phẩm</span><span>Đơn giá</span><span>Số lượng</span><span>Thành tiền</span></div><div class="cart-line" th:each="item : ${cart}"><a class="cart-item" th:href="@{/products/{id}(id=${item.productId()})}"><img th:src="${item.imageUrl()}" alt=""><span><b th:text="${item.productName()}"></b><small th:text="${item.size() + ' · ' + item.color()}"></small></span></a><span th:text="${#numbers.formatDecimal(item.price(),0,'COMMA',0,'POINT') + ' đ'}"></span><form class="quantity-form" th:action="@{/cart/update}" method="post"><input type="hidden" name="id" th:value="${item.productId()}"><input name="quantity" type="number" min="0" th:value="${item.quantity()}"><button title="Cập nhật"><i class="fa-solid fa-rotate"></i></button></form><strong th:text="${#numbers.formatDecimal(item.subtotal(),0,'COMMA',0,'POINT') + ' đ'}"></strong><form th:action="@{/cart/remove}" method="post"><input type="hidden" name="id" th:value="${item.productId()}"><button class="remove-item" title="Xóa"><i class="fa-regular fa-trash-can"></i></button></form></div></div><aside class="order-summary"><span class="eyebrow">TÓM TẮT ĐƠN</span><div><span>Tạm tính</span><b th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT') + ' đ'}"></b></div><div><span>Vận chuyển</span><span>Tính khi xác nhận</span></div><div class="summary-total"><b>Tổng cộng</b><strong th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT') + ' đ'}"></strong></div><a class="button button-dark button-block" th:href="@{/cart/checkout}">Tiến hành đặt hàng <i class="fa-solid fa-arrow-right"></i></a><a class="continue-link" th:href="@{/products}">Tiếp tục mua sắm</a></aside></div></section></main><footer th:replace="~{fragments/layout :: footer}"></footer></body></html>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Giỏ hàng')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: header}"></div>
+<main>
+    <section class="page-width content-page">
+        <div class="catalog-heading">
+            <div>
+                <span class="eyebrow">SẮP THÀNH CỦA BẠN</span>
+                <h1>Giỏ hàng <small th:text="'(' + ${cart.size()} + ')'">(0)</small></h1>
+            </div>
+        </div>
+        <div th:if="${cart.isEmpty()}" class="empty-state">
+            <i class="fa-solid fa-bag-shopping"></i>
+            <h2>Giỏ hàng đang trống</h2>
+            <p>Một món đồ hợp với bạn đang chờ ở đây.</p>
+            <a class="button button-dark" th:href="@{/products}">Tiếp tục mua sắm</a>
+        </div>
+        <div th:unless="${cart.isEmpty()}" class="cart-layout">
+            <div class="cart-lines">
+                <div class="cart-table-head">
+                    <span>Sản phẩm</span><span>Đơn giá</span><span>Số lượng</span><span>Thành tiền</span>
+                </div>
+                <div class="cart-line" th:each="item : ${cart}">
+                    <a class="cart-item" th:href="@{/products/{id}(id=${item.productId()})}">
+                        <img th:src="${item.imageUrl()}" alt="">
+                        <span><b th:text="${item.productName()}"></b><small th:text="${item.size() + ' · ' + item.color()}"></small></span>
+                    </a>
+                    <span th:text="${#numbers.formatDecimal(item.price(),0,'COMMA',0,'POINT') + ' đ'}"></span>
+                    <form class="quantity-form" th:action="@{/cart/update}" method="post">
+                        <input type="hidden" name="id" th:value="${item.productId()}">
+                        <input name="quantity" type="number" min="0" th:value="${item.quantity()}"
+                               aria-label="Số lượng" onchange="this.form.requestSubmit()">
+                    </form>
+                    <strong th:text="${#numbers.formatDecimal(item.subtotal(),0,'COMMA',0,'POINT') + ' đ'}"></strong>
+                    <form th:action="@{/cart/remove}" method="post">
+                        <input type="hidden" name="id" th:value="${item.productId()}">
+                        <button class="remove-item" title="Xóa"><i class="fa-regular fa-trash-can"></i></button>
+                    </form>
+                </div>
+            </div>
+            <aside class="order-summary">
+                <span class="eyebrow">TÓM TẮT ĐƠN</span>
+                <div>
+                    <span>Tạm tính</span>
+                    <b th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT') + ' đ'}"></b>
+                </div>
+                <div><span>Vận chuyển</span><span>Tính khi xác nhận</span></div>
+                <div class="summary-total">
+                    <b>Tổng cộng</b>
+                    <strong th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT') + ' đ'}"></strong>
+                </div>
+                <a class="button button-dark button-block" th:href="@{/cart/checkout}">Tiến hành đặt hàng <i class="fa-solid fa-arrow-right"></i></a>
+                <a class="continue-link" th:href="@{/products}">Tiếp tục mua sắm</a>
+            </aside>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

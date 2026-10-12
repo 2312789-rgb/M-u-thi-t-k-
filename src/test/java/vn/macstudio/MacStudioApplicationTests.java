@@ -60,6 +60,22 @@ class MacStudioApplicationTests {
 	}
 
 	@Test
+	void loginPageRendersWithoutSocialProvidersConfigured() throws Exception {
+		mockMvc.perform(get("/account/login"))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("name=\"email\"")))
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("Tiếp tục với Google")))
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("Tiếp tục với Apple")))
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(org.hamcrest.Matchers.not(containsString("/oauth2/authorization/google"))))
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(org.hamcrest.Matchers.not(containsString("/oauth2/authorization/apple"))));
+	}
+
+	@Test
 	void adminPagesRequireAuthentication() throws Exception {
 		mockMvc.perform(get("/admin"))
 			.andExpect(status().is3xxRedirection())
@@ -146,5 +162,115 @@ class MacStudioApplicationTests {
 			.andExpect(status().isOk())
 			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
 				.string(containsString("cần xác nhận")));
+	}
+
+	@Test
+	void customerCanOpenChatAndSendMessageToAdministrators() throws Exception {
+		AppUser customer = users.findByEmailIgnoreCase("khach1@example.com").orElseThrow();
+		AppUser admin = users.findByEmailIgnoreCase("admin@macstudio.vn").orElseThrow();
+
+		mockMvc.perform(get("/chat").with(user(customer)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("Chat với Mặc Studio")));
+
+		mockMvc.perform(post("/chat/messages")
+				.with(user(customer))
+				.with(csrf())
+				.param("content", "Tôi cần hỗ trợ"))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.content")
+				.value("Tôi cần hỗ trợ"));
+
+		mockMvc.perform(get("/chat").with(user(admin)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("Tôi cần hỗ trợ")));
+
+		mockMvc.perform(post("/chat/messages")
+				.with(user(admin))
+				.with(csrf())
+				.param("customerId", customer.getId().toString())
+				.param("content", "Chúng tôi sẵn sàng hỗ trợ"))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.ownMessage")
+				.value(true));
+
+		mockMvc.perform(get("/chat/messages").with(user(customer)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("Chúng tôi sẵn sàng hỗ trợ")));
+	}
+
+	@Test
+	void customerCannotAccessAnotherCustomersChat() throws Exception {
+		AppUser customer = users.findByEmailIgnoreCase("khach1@example.com").orElseThrow();
+		AppUser otherCustomer = users.findByEmailIgnoreCase("khach2@example.com").orElseThrow();
+
+		mockMvc.perform(get("/chat/messages")
+				.with(user(customer))
+				.param("customerId", otherCustomer.getId().toString()))
+			.andExpect(status().isForbidden());
+	}
+
+	@Test
+	void greetingIsCreatedForFirstCustomerChatAndUnreadMessagesNotifyAdministrator() throws Exception {
+		AppUser customer = users.findByEmailIgnoreCase("khach1@example.com").orElseThrow();
+		AppUser admin = users.findByEmailIgnoreCase("admin@macstudio.vn").orElseThrow();
+
+		mockMvc.perform(get("/chat").with(user(customer)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("Cảm ơn bạn đã liên hệ Mặc Studio")));
+
+		mockMvc.perform(post("/chat/messages")
+				.with(user(customer))
+				.with(csrf())
+				.param("content", "Tôi cần tư vấn sản phẩm"))
+			.andExpect(status().isOk());
+
+		mockMvc.perform(get("/chat").with(user(admin)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("class=\"notification-count chat-header-count")))
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("/js/chat-notifications.js")));
+
+		mockMvc.perform(get("/chat/unread-count").with(user(admin)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string("1"));
+
+		mockMvc.perform(get("/chat/{customerId}", customer.getId()).with(user(admin)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("Tôi cần tư vấn sản phẩm")));
+
+		mockMvc.perform(post("/chat/messages")
+				.with(user(admin))
+				.with(csrf())
+				.param("customerId", customer.getId().toString())
+				.param("content", "Chúng tôi sẽ phản hồi sớm"))
+			.andExpect(status().isOk());
+
+		mockMvc.perform(get("/").with(user(customer)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("class=\"notification-count chat-header-count")));
+		mockMvc.perform(get("/chat/unread-count").with(user(customer)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string("1"));
+
+		mockMvc.perform(get("/chat").with(user(customer)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("Chúng tôi sẽ phản hồi sớm")));
+
+		mockMvc.perform(get("/chat/unread-count").with(user(customer)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string("0"));
+
+		mockMvc.perform(get("/chat/unread-count").with(user(admin)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string("0"));
 	}
 }

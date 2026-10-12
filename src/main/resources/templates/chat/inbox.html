@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tin nhắn khách hàng')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: header}"></div>
+<main class="page-width chat-page">
+    <div class="catalog-heading">
+        <div><span class="eyebrow">HỖ TRỢ KHÁCH HÀNG</span><h1>Tin nhắn</h1></div>
+    </div>
+    <section class="chat-inbox" data-chat-inbox>
+        <div th:if="${conversations.isEmpty()}" class="empty-state">
+            <i class="fa-regular fa-comments"></i><h2>Chưa có cuộc trò chuyện</h2>
+            <p>Tin nhắn từ khách hàng sẽ xuất hiện tại đây.</p>
+        </div>
+        <a class="chat-conversation-link" th:each="conversation : ${conversations}"
+           th:href="@{/chat/{id}(id=${conversation.customerId()})}">
+            <span class="chat-avatar"><i class="fa-regular fa-user"></i></span>
+            <span class="chat-conversation-copy">
+                <strong th:text="${conversation.customerName()}"></strong>
+                <span th:text="${conversation.lastMessage()}"></span>
+            </span>
+            <span class="chat-unread-badge" th:if="${conversation.unreadCount() > 0}"
+                  th:text="${conversation.unreadCount() > 99 ? '99+' : conversation.unreadCount()}"></span>
+            <time th:text="${conversation.lastMessageAt()}"></time>
+        </a>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/js/chat-inbox.js}" defer></script>
+</body>
+</html>
