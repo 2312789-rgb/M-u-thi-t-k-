@@ -1,1 +1,44 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/layout :: head(${product.name})}"></head><body><div th:replace="~{fragments/layout :: header}"></div><main><section class="page-width detail-page"><div class="detail-photo"><img th:src="${product.imageUrl}" th:alt="${product.name}"></div><div class="detail-copy"><div class="breadcrumbs"><a th:href="@{/products}">Sản phẩm</a><span>/</span><span th:text="${product.category.name}">Danh mục</span></div><span class="eyebrow" th:text="${product.category.name + ' · ' + product.color}"></span><h1 th:text="${product.name}"></h1><div class="detail-price" th:text="${#numbers.formatDecimal(product.price,0,'COMMA',0,'POINT') + ' đ'}"></div><p th:text="${product.description}"></p><div class="detail-attrs"><span>Size<b th:text="${product.size}"></b></span><span>Màu sắc<b th:text="${product.color}"></b></span><span>Tình trạng<b th:text="${product.quantity == 0 ? 'Hết hàng' : product.quantity < 6 ? 'Sắp hết' : 'Còn hàng'}"></b></span></div><form th:if="${product.quantity > 0 and product.status == 'Đang bán'}" class="add-form" th:action="@{/cart/add}" method="post"><input type="hidden" name="id" th:value="${product.id}"><label>Số lượng<input name="quantity" type="number" value="1" min="1" th:max="${product.quantity}"></label><button class="button button-dark">Thêm vào giỏ <i class="fa-solid fa-bag-shopping"></i></button></form><button th:unless="${product.quantity > 0 and product.status == 'Đang bán'}" class="button button-muted" disabled>Đã hết hàng</button><div class="detail-note"><i class="fa-solid fa-box-open"></i> Đổi trả trong 7 ngày · Giao hàng toàn quốc</div></div></section></main><footer th:replace="~{fragments/layout :: footer}"></footer></body></html>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${product.name})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: header}"></div>
+<main>
+    <section class="page-width detail-page">
+        <div class="detail-gallery">
+            <div class="detail-photo">
+                <img id="product-main-image" th:src="${product.imageUrl}" th:alt="${product.name}">
+            </div>
+            <div class="detail-thumbnails" th:if="${product.imageUrls.size() > 1}" aria-label="Ảnh sản phẩm">
+                <button class="detail-thumbnail is-active" th:each="imageUrl,iter : ${product.imageUrls}"
+                        type="button" th:data-image="${imageUrl}" th:aria-label="${'Xem ảnh ' + (iter.index + 1)}"
+                        th:aria-pressed="${iter.index == 0}">
+                    <img th:src="${imageUrl}" th:alt="${product.name + ' - ảnh ' + (iter.index + 1)}" loading="lazy">
+                </button>
+            </div>
+        </div>
+        <div class="detail-copy">
+            <div class="breadcrumbs"><a th:href="@{/products}">Sản phẩm</a><span>/</span><span th:text="${product.category.name}">Danh mục</span></div>
+            <span class="eyebrow" th:text="${product.category.name + ' · ' + product.color}"></span>
+            <h1 th:text="${product.name}"></h1>
+            <div class="detail-price" th:text="${#numbers.formatDecimal(product.price,0,'COMMA',0,'POINT') + ' đ'}"></div>
+            <p th:text="${product.description}"></p>
+            <div class="detail-attrs">
+                <span>Size<b th:text="${product.size}"></b></span>
+                <span>Màu sắc<b th:text="${product.color}"></b></span>
+                <span>Tình trạng<b th:text="${product.quantity == 0 ? 'Hết hàng' : product.quantity < 6 ? 'Sắp hết' : 'Còn hàng'}"></b></span>
+            </div>
+            <form th:if="${product.quantity > 0 and product.status == 'Đang bán'}" class="add-form" th:action="@{/cart/add}" method="post">
+                <input type="hidden" name="id" th:value="${product.id}">
+                <label>Số lượng<input name="quantity" type="number" value="1" min="1" th:max="${product.quantity}"></label>
+                <button class="button button-dark">Thêm vào giỏ <i class="fa-solid fa-bag-shopping"></i></button>
+            </form>
+            <button th:unless="${product.quantity > 0 and product.status == 'Đang bán'}" class="button button-muted" disabled>Đã hết hàng</button>
+            <div class="detail-note"><i class="fa-solid fa-box-open"></i> Đổi trả trong 7 ngày · Giao hàng toàn quốc</div>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/js/product-gallery.js}" defer></script>
+</body>
+</html>

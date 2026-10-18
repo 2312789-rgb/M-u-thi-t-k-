@@ -61,7 +61,7 @@ public class CartController {
     @GetMapping("/checkout")
     public String checkout(HttpSession session, @AuthenticationPrincipal AppUser user, Model model) {
         if (cart.get(session).isEmpty()) return "redirect:/cart";
-        CheckoutForm form = new CheckoutForm(); form.setRecipientName(user.getFullName()); form.setPhone(user.getPhone()); form.setAddress(user.getAddress());
+        CheckoutForm form = new CheckoutForm(); form.setRecipientName(user.getFullName()); form.setPhone(user.getPhone());
         addCheckoutModel(session, model); model.addAttribute("form", form); return "cart/checkout";
     }
 
@@ -72,6 +72,7 @@ public class CartController {
         if (lines.isEmpty()) return "redirect:/cart";
         if (errors.hasErrors()) { addCheckoutModel(session, model); return "cart/checkout"; }
         try {
+            form.setAddress(form.buildAddress());
             var order = orders.placeOrder(user.getEmail(), form, lines);
             String instructions = payments.create(order.getPaymentMethod()).instructions(order.getId(), order.getTotalAmount());
             cart.clear(session);

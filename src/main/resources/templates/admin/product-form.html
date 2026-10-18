@@ -1,1 +1,87 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/layout :: head('Sản phẩm')}"></head><body><div th:replace="~{fragments/layout :: header}"></div><main><section class="admin-shell"><aside class="admin-sidebar"><a class="admin-brand" th:href="@{/admin}">MẶC<span> / ADMIN</span></a><a th:href="@{/admin}">Tổng quan</a><a class="active" th:href="@{/admin/products}">Sản phẩm</a><a th:href="@{/admin/categories}">Danh mục</a><a th:href="@{/admin/orders}">Đơn hàng</a><a th:href="@{/admin/customers}">Khách hàng</a></aside><div class="admin-main narrow-admin"><div class="admin-topline"><div><span class="eyebrow">KHO HÀNG</span><h1>Sản phẩm</h1></div><a class="text-link" th:href="@{/admin/products}">← Quay lại</a></div><form class="admin-form" th:action="@{/admin/products/save}" th:object="${form}" method="post" enctype="multipart/form-data"><input type="hidden" th:field="*{id}"><div class="validation-summary" th:if="${#fields.hasErrors()}">Vui lòng kiểm tra lại dữ liệu sản phẩm.</div><label>Tên sản phẩm</label><input th:field="*{name}"><span th:errors="*{name}"></span><div class="form-row"><div><label>Danh mục</label><select th:field="*{categoryId}"><option value="">Chọn danh mục</option><option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"></option></select><span th:errors="*{categoryId}"></span></div><div><label>Giá</label><input th:field="*{price}" type="number" min="1000" step="1000"><span th:errors="*{price}"></span></div></div><div class="form-row"><div><label>Tồn kho</label><input th:field="*{quantity}" type="number" min="0"><span th:errors="*{quantity}"></span></div><div><label>Trạng thái</label><select th:field="*{status}"><option value="Đang bán">Đang bán</option><option value="Ngừng bán">Ngừng bán</option></select><span th:errors="*{status}"></span></div></div><div class="form-row"><div><label>Size</label><input th:field="*{size}"><span th:errors="*{size}"></span></div><div><label>Màu</label><input th:field="*{color}"><span th:errors="*{color}"></span></div></div><label>Mô tả</label><textarea th:field="*{description}" rows="4"></textarea><span th:errors="*{description}"></span><label>Ảnh sản phẩm <small>(JPG, PNG, WEBP · tối đa 4 MB)</small></label><input type="file" name="image" accept="image/jpeg,image/png,image/webp"><ul class="validation-summary" th:if="${#fields.hasGlobalErrors()}"><li th:each="error : ${#fields.globalErrors()}" th:text="${error}"></li></ul><button class="button button-dark">Lưu sản phẩm</button></form></div></section></main><footer th:replace="~{fragments/layout :: footer}"></footer></body></html>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Sản phẩm')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: header}"></div>
+<main>
+    <section class="admin-shell">
+        <aside class="admin-sidebar">
+            <a class="admin-brand" th:href="@{/admin}">MẶC<span> / ADMIN</span></a>
+            <a th:href="@{/admin}">Tổng quan</a>
+            <a class="active" th:href="@{/admin/products}">Sản phẩm</a>
+            <a th:href="@{/admin/categories}">Danh mục</a>
+            <a th:href="@{/admin/orders}">Đơn hàng</a>
+            <a th:href="@{/admin/customers}">Khách hàng</a>
+        </aside>
+        <div class="admin-main narrow-admin">
+            <div class="admin-topline">
+                <div><span class="eyebrow">KHO HÀNG</span><h1>Sản phẩm</h1></div>
+                <a class="text-link" th:href="@{/admin/products}">← Quay lại</a>
+            </div>
+            <form class="admin-form product-admin-form" th:action="@{/admin/products/save}" th:object="${form}" method="post" enctype="multipart/form-data">
+                <input type="hidden" th:field="*{id}">
+                <div class="validation-summary" th:if="${#fields.hasErrors()}">Vui lòng kiểm tra lại dữ liệu sản phẩm.</div>
+                <label for="name">Tên sản phẩm</label>
+                <input id="name" th:field="*{name}">
+                <span th:errors="*{name}"></span>
+                <div class="form-row">
+                    <div>
+                        <label for="categoryId">Danh mục</label>
+                        <select id="categoryId" th:field="*{categoryId}">
+                            <option value="">Chọn danh mục</option>
+                            <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"></option>
+                        </select>
+                        <span th:errors="*{categoryId}"></span>
+                    </div>
+                    <div>
+                        <label for="price">Giá</label>
+                        <input id="price" th:field="*{price}" type="number" min="1000" step="1000">
+                        <span th:errors="*{price}"></span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <label for="quantity">Tồn kho</label>
+                        <input id="quantity" th:field="*{quantity}" type="number" min="0">
+                        <span th:errors="*{quantity}"></span>
+                    </div>
+                    <div>
+                        <label for="status">Trạng thái</label>
+                        <select id="status" th:field="*{status}">
+                            <option value="Đang bán">Đang bán</option>
+                            <option value="Ngừng bán">Ngừng bán</option>
+                        </select>
+                        <span th:errors="*{status}"></span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div><label for="size">Size</label><input id="size" th:field="*{size}"><span th:errors="*{size}"></span></div>
+                    <div><label for="color">Màu</label><input id="color" th:field="*{color}"><span th:errors="*{color}"></span></div>
+                </div>
+                <label for="description">Mô tả</label>
+                <textarea id="description" th:field="*{description}" rows="4"></textarea>
+                <span th:errors="*{description}"></span>
+                <label for="product-images">Ảnh sản phẩm <small>(Chọn nhiều ảnh JPG, PNG, WEBP · tối đa 4 MB mỗi ảnh, 10 ảnh mỗi lần)</small></label>
+                <input id="product-images" type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple>
+                <div class="product-image-gallery" th:if="${!currentImages.isEmpty()}">
+                    <p>Ảnh hiện tại (ảnh đầu tiên là ảnh đại diện):</p>
+                    <div class="product-image-thumbnails">
+                        <img th:each="imageUrl : ${currentImages}" th:src="${imageUrl}" alt="Ảnh sản phẩm hiện tại">
+                    </div>
+                </div>
+                <div class="product-image-gallery" id="selected-images-preview" hidden>
+                    <p>Ảnh mới sẽ được thêm vào sản phẩm; ảnh đầu tiên làm ảnh đại diện nếu sản phẩm chưa có ảnh.</p>
+                    <div class="product-image-thumbnails" id="selected-images-list"></div>
+                </div>
+                <ul class="validation-summary" th:if="${#fields.hasGlobalErrors()}">
+                    <li th:each="error : ${#fields.globalErrors()}" th:text="${error}"></li>
+                </ul>
+                <button class="button button-dark">Lưu sản phẩm</button>
+            </form>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/js/admin-product-images.js}" defer></script>
+</body>
+</html>

@@ -51,7 +51,9 @@
                     <b>Tổng cộng</b>
                     <strong th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT') + ' đ'}"></strong>
                 </div>
-                <a class="button button-dark button-block" th:href="@{/cart/checkout}">Tiến hành đặt hàng <i class="fa-solid fa-arrow-right"></i></a>
+                <a class="button button-dark button-block" sec:authorize="hasRole('CUSTOMER')" th:href="@{/cart/checkout}">Tiến hành đặt hàng <i class="fa-solid fa-arrow-right"></i></a>
+                <a class="button button-dark button-block" sec:authorize="!isAuthenticated()" th:href="@{/account/login}">Đăng nhập để đặt hàng <i class="fa-solid fa-arrow-right"></i></a>
+                <p sec:authorize="hasRole('ADMIN')" class="checkout-notice">Vui lòng đăng nhập bằng tài khoản khách hàng để đặt hàng.</p>
                 <a class="continue-link" th:href="@{/products}">Tiếp tục mua sắm</a>
             </aside>
         </div>

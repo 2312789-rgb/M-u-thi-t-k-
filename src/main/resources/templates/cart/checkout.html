@@ -1,1 +1,75 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/layout :: head('Thanh toán')}"></head><body><div th:replace="~{fragments/layout :: header}"></div><main><section class="page-width content-page"><div class="catalog-heading"><div><span class="eyebrow">CHỈ CÒN MỘT BƯỚC</span><h1>Thông tin giao hàng</h1></div></div><form class="checkout-layout" th:action="@{/cart/checkout}" th:object="${form}" method="post"><div class="form-panel"><div class="validation-summary" th:if="${#fields.hasErrors()}">Vui lòng kiểm tra lại thông tin.</div><label>Người nhận</label><input th:field="*{recipientName}"><span th:errors="*{recipientName}"></span><label>Số điện thoại</label><input th:field="*{phone}"><span th:errors="*{phone}"></span><label>Địa chỉ giao hàng</label><textarea th:field="*{address}" rows="3"></textarea><span th:errors="*{address}"></span><label>Phương thức thanh toán</label><div class="payment-options"><label><input type="radio" th:field="*{paymentMethod}" value="COD"><span><b>Thanh toán khi nhận hàng</b><small>COD · trả tiền mặt</small></span></label><label><input type="radio" th:field="*{paymentMethod}" value="BANK_TRANSFER"><span><b>Chuyển khoản</b><small>Hướng dẫn sau khi đặt</small></span></label></div><label>Ghi chú</label><textarea th:field="*{note}" rows="2"></textarea><button class="button button-dark button-block">Xác nhận đặt hàng <i class="fa-solid fa-arrow-right"></i></button></div><aside class="order-summary"><span class="eyebrow">ĐƠN HÀNG CỦA BẠN</span><div class="checkout-item" th:each="item : ${cart}"><img th:src="${item.imageUrl()}" alt=""><span th:text="${item.productName() + ' × ' + item.quantity()}"></span><b th:text="${#numbers.formatDecimal(item.subtotal(),0,'COMMA',0,'POINT') + ' đ'}"></b></div><div class="summary-total"><b>Tổng cộng</b><strong th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT') + ' đ'}"></strong></div></aside></form></section></main><footer th:replace="~{fragments/layout :: footer}"></footer></body></html>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Thanh toán')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: header}"></div>
+<main>
+    <section class="page-width content-page">
+        <div class="catalog-heading">
+            <div><span class="eyebrow">CHỈ CÒN MỘT BƯỚC</span><h1>Thông tin giao hàng</h1></div>
+        </div>
+        <form class="checkout-layout" th:action="@{/cart/checkout}" th:object="${form}" method="post">
+            <div class="form-panel">
+                <div class="validation-summary" th:if="${#fields.hasErrors()}">Vui lòng kiểm tra lại thông tin.</div>
+                <label for="recipientName">Người nhận</label>
+                <input th:field="*{recipientName}" autocomplete="name">
+                <span class="field-error" th:errors="*{recipientName}"></span>
+
+                <label for="phone">Số điện thoại</label>
+                <input th:field="*{phone}" autocomplete="tel">
+                <span class="field-error" th:errors="*{phone}"></span>
+
+                <section class="address-fields" aria-label="Địa chỉ hành chính">
+                    <div class="address-fields-grid">
+                        <div class="checkout-field">
+                            <label for="province">Tỉnh / Thành phố</label>
+                            <select id="province" th:field="*{province}" th:data-selected="*{province}" disabled required>
+                                <option value="">Đang tải danh sách...</option>
+                            </select>
+                            <span class="field-error" th:errors="*{province}"></span>
+                        </div>
+                        <div class="checkout-field">
+                            <label for="ward">Phường / Xã</label>
+                            <select id="ward" th:field="*{ward}" th:data-selected="*{ward}" disabled required>
+                                <option value="">Chọn tỉnh / thành phố trước</option>
+                            </select>
+                            <span class="field-error" th:errors="*{ward}"></span>
+                        </div>
+                    </div>
+                    <p class="location-status" id="location-status" role="status" aria-live="polite"></p>
+                    <button class="location-retry" id="location-retry" type="button" hidden>Thử tải lại dữ liệu</button>
+                </section>
+
+                <label for="specificAddress">Địa chỉ cụ thể</label>
+                <textarea id="specificAddress" th:field="*{specificAddress}" rows="3" maxlength="170"
+                          autocomplete="street-address" placeholder="Số nhà, tên đường..."></textarea>
+                <span class="field-error" th:errors="*{specificAddress}"></span>
+
+                <label>Phương thức thanh toán</label>
+                <div class="payment-options">
+                    <label><input type="radio" th:field="*{paymentMethod}" value="COD"><span><b>Thanh toán khi nhận hàng</b><small>COD · trả tiền mặt</small></span></label>
+                    <label><input type="radio" th:field="*{paymentMethod}" value="BANK_TRANSFER"><span><b>Chuyển khoản</b><small>Hướng dẫn sau khi đặt</small></span></label>
+                </div>
+                <label for="note">Ghi chú</label>
+                <textarea id="note" th:field="*{note}" rows="2"></textarea>
+                <button class="button button-dark button-block">Xác nhận đặt hàng <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+            <aside class="order-summary">
+                <span class="eyebrow">ĐƠN HÀNG CỦA BẠN</span>
+                <div class="checkout-item" th:each="item : ${cart}">
+                    <img th:src="${item.imageUrl()}" alt="">
+                    <span th:text="${item.productName() + ' × ' + item.quantity()}"></span>
+                    <b th:text="${#numbers.formatDecimal(item.subtotal(),0,'COMMA',0,'POINT') + ' đ'}"></b>
+                </div>
+                <div class="summary-total">
+                    <b>Tổng cộng</b>
+                    <strong th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT') + ' đ'}"></strong>
+                </div>
+            </aside>
+        </form>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/js/checkout.js}" defer></script>
+</body>
+</html>

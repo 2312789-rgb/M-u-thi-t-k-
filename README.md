@@ -1,6 +1,6 @@
 # Mặc Studio Java
 
-Phiên bản chuyển đổi sang **Java 21 + Spring Boot 4 + Thymeleaf + Spring Data JPA + Spring Security**. Bản C# ở thư mục cha được giữ làm dự phòng; database Java mặc định là H2 file-local, không ghi vào SQL Server `ClothingStoreDb` của C#.
+Project hiện dùng **Java 21 + Spring Boot 4 + Thymeleaf + Spring Data JPA + Spring Security**; database mặc định là H2 lưu cục bộ trong project.
 
 ## Chạy
 
@@ -120,12 +120,14 @@ Nếu chạy từ `java-version`, dùng `.\mvnw.cmd spring-boot:run` trong Power
 ## Chức năng đã chuyển
 
 - Trang chủ, catalog tìm/lọc theo tên, danh mục, size, màu, khoảng giá và sắp xếp.
+- Admin có thể tải tối đa 10 ảnh JPG/PNG/WEBP (4 MB mỗi ảnh) cho một sản phẩm; ảnh đầu làm ảnh đại diện và ảnh còn lại hiển thị trong gallery trang chi tiết.
 - Đăng ký/đăng nhập bằng BCrypt, role Admin/Customer, hồ sơ khách hàng.
 - Chat hỗ trợ lưu lịch sử giữa khách hàng và đội ngũ quản trị, tự gửi lời chào khi mở chat lần đầu, cảnh báo tin nhắn chưa đọc cho cả hai phía và tự làm mới mỗi 4 giây.
 - Session cart, kiểm tra tồn kho, checkout transactional, snapshot giá, confirmation và lịch sử đơn.
+- Checkout chọn Tỉnh/Thành phố → Phường/Xã theo API địa giới hiện hành; địa chỉ cụ thể được ghép thành địa chỉ giao hàng khi tạo đơn. Cấp Quận/Huyện không còn trong địa giới hiện hành từ đợt cải cách 2025.
 - Thông báo lưu trong database: khách hàng nhận cập nhật trạng thái đơn; admin nhận thông báo đơn mới và trạng thái thay đổi; badge số chưa đọc và trang đánh dấu đã đọc.
 - Admin dashboard, CRUD sản phẩm/danh mục/khách hàng, upload ảnh, quản lý trạng thái đơn; hủy đơn hoàn kho.
-- Design Patterns: Singleton (`StoreMetadata`), Repository (Spring Data repositories), Strategy + Factory (payment), Observer (order status log), State (quy tắc chuyển trạng thái đơn hàng).
+- Design Patterns: Singleton (`StoreMetadata`), Repository (Spring Data repositories), Strategy + Factory (payment), Observer (order notifications and checkout location selections), Adapter (Vietnamese administrative API), State (quy tắc chuyển trạng thái đơn hàng).
 - Ảnh belt/scarf local ở `src/main/resources/static/images`; CSS của bản C# được dùng lại.
 
 ## SQL Server thay cho H2

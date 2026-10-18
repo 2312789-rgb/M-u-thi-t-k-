@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.mock.web.MockMultipartFile;
 import vn.macstudio.macstudio.repository.ProductRepository;
 import vn.macstudio.macstudio.repository.AppUserRepository;
 import vn.macstudio.macstudio.repository.CustomerOrderRepository;
@@ -23,6 +25,7 @@ import vn.macstudio.macstudio.repository.UserNotificationRepository;
 import vn.macstudio.macstudio.model.AppUser;
 import vn.macstudio.macstudio.model.OrderStatus;
 import vn.macstudio.macstudio.service.OrderService;
+import vn.macstudio.macstudio.service.CartService;
 import vn.macstudio.macstudio.web.form.CartLine;
 import vn.macstudio.macstudio.web.form.CheckoutForm;
 
@@ -48,6 +51,9 @@ class MacStudioApplicationTests {
 	@Autowired
 	private OrderService orderService;
 
+	@Autowired
+	private CartService cart;
+
 	private String testProductName;
 
 	@BeforeEach
@@ -57,6 +63,48 @@ class MacStudioApplicationTests {
 
 	@Test
 	void contextLoads() {
+	}
+
+	@Test
+	void checkoutShowsCurrentProvinceAndWardFields() throws Exception {
+		AppUser customer = users.findByEmailIgnoreCase("khach1@example.com").orElseThrow();
+		var product = products.findAll().getFirst();
+		MockHttpSession session = new MockHttpSession();
+		cart.add(session, product.getId(), 1);
+
+		mockMvc.perform(get("/cart/checkout").session(session).with(user(customer)))
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("Tỉnh / Thành phố")))
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("Phường / Xã")))
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("Địa chỉ cụ thể")))
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("/js/checkout.js")));
+	}
+
+	@Test
+	void checkoutStoresTheComposedShippingAddress() throws Exception {
+		AppUser customer = users.findByEmailIgnoreCase("khach1@example.com").orElseThrow();
+		var product = products.findAll().getFirst();
+		MockHttpSession session = new MockHttpSession();
+		cart.add(session, product.getId(), 1);
+
+		mockMvc.perform(post("/cart/checkout")
+				.session(session)
+				.with(user(customer))
+				.with(csrf())
+				.param("recipientName", customer.getFullName())
+				.param("phone", "0900000000")
+				.param("province", "Thành phố Hà Nội")
+				.param("ward", "Phường Ba Đình")
+				.param("specificAddress", "12 Nguyễn Huệ")
+				.param("paymentMethod", "COD"))
+			.andExpect(status().is3xxRedirection());
+
+		org.junit.jupiter.api.Assertions.assertTrue(orders.findAll().stream()
+			.anyMatch(order -> "12 Nguyễn Huệ, Phường Ba Đình, Thành phố Hà Nội".equals(order.getShippingAddress())));
 	}
 
 	@Test
@@ -97,7 +145,11 @@ class MacStudioApplicationTests {
 	@Test
 	void administratorCanOpenNewProductForm() throws Exception {
 		mockMvc.perform(get("/admin/products/new").with(user("admin").authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
-			.andExpect(status().isOk());
+			.andExpect(status().isOk())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString("name=\"images\"")))
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+				.string(containsString(" multiple")));
 	}
 
 	@Test
@@ -118,6 +170,48 @@ class MacStudioApplicationTests {
 
 		org.junit.jupiter.api.Assertions.assertTrue(products.findAll().stream()
 			.anyMatch(product -> product.getName().equals(testProductName)));
+	}
+
+	@Test
+	void administratorCanUploadAndViewMultipleProductImages() throws Exception {
+		MockMultipartFile firstImage = new MockMultipartFile("images", "front.png", "image/png", new byte[]{1, 2, 3});
+		MockMultipartFile secondImage = new MockMultipartFile("images", "back.jpg", "image/jpeg", new byte[]{4, 5, 6});
+
+		mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+				.multipart("/admin/products/save")
+				.file(firstImage)
+				.file(secondImage)
+				.with(user("admin").authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
+				.with(csrf())
+				.param("name", testProductName)
+				.param("categoryId", "1")
+				.param("price", "125000")
+				.param("quantity", "8")
+				.param("status", "Đang bán")
+				.param("size", "M")
+				.param("color", "Be")
+				.param("description", "Sản phẩm có nhiều ảnh"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(header().string("Location", "/admin/products"));
+
+		var savedProduct = products.findAll().stream()
+			.filter(product -> product.getName().equals(testProductName))
+			.findFirst().orElseThrow();
+		org.junit.jupiter.api.Assertions.assertEquals(2, savedProduct.getImageUrls().size());
+
+		try {
+			mockMvc.perform(get("/products/{id}", savedProduct.getId()))
+				.andExpect(status().isOk())
+				.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+					.string(containsString("detail-thumbnail")));
+		} finally {
+			for (String imageUrl : savedProduct.getImageUrls()) {
+				if (imageUrl.startsWith("/uploads/")) {
+					java.nio.file.Files.deleteIfExists(java.nio.file.Path.of("uploads",
+						imageUrl.substring("/uploads/".length())));
+				}
+			}
+		}
 	}
 
 	@Test

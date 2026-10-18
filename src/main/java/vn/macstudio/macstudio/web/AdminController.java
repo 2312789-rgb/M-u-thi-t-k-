@@ -3,8 +3,11 @@ package vn.macstudio.macstudio.web;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,6 +36,7 @@ import vn.macstudio.macstudio.web.form.AdminProductForm;
 @RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
     private final ProductRepository products;
     private final CategoryRepository categories;
     private final AppUserRepository users;
@@ -66,7 +70,11 @@ public class AdminController {
     public String products(Model model) { model.addAttribute("products", products.findAll()); return "admin/products"; }
 
     @GetMapping("/products/new")
-    public String newProduct(Model model) { model.addAttribute("form", new AdminProductForm()); return productForm(model); }
+    public String newProduct(Model model) {
+        model.addAttribute("form", new AdminProductForm());
+        model.addAttribute("currentImages", List.of());
+        return productForm(model);
+    }
 
     @GetMapping("/products/{id}/edit")
     public String editProduct(@PathVariable long id, Model model, RedirectAttributes flash) {
@@ -75,30 +83,61 @@ public class AdminController {
         AdminProductForm form = new AdminProductForm(); form.setId(product.getId()); form.setCategoryId(product.getCategory().getId());
         form.setName(product.getName()); form.setDescription(product.getDescription()); form.setPrice(product.getPrice());
         form.setQuantity(product.getQuantity()); form.setSize(product.getSize()); form.setColor(product.getColor()); form.setStatus(product.getStatus());
-        model.addAttribute("form", form); model.addAttribute("currentImage", product.getImageUrl());
+        model.addAttribute("form", form); model.addAttribute("currentImages", product.getImageUrls());
         return productForm(model);
     }
 
     @PostMapping("/products/save")
     public String saveProduct(@Valid @ModelAttribute("form") AdminProductForm form, BindingResult errors,
-                              @RequestParam(required = false) MultipartFile image, Model model, RedirectAttributes flash) {
+                              @RequestParam(name = "images", required = false) List<MultipartFile> uploadedImages,
+                              Model model, RedirectAttributes flash) {
+        List<MultipartFile> images = uploadedImages == null ? List.of() :
+            uploadedImages.stream().filter(image -> image != null && !image.isEmpty()).toList();
         Category category = form.getCategoryId() == null ? null : categories.findById(form.getCategoryId()).orElse(null);
         if (category == null) errors.rejectValue("categoryId", "category.invalid", "Hãy chọn danh mục hợp lệ.");
-        if (image != null && !image.isEmpty() && (image.getSize() > 4_000_000 || !List.of("image/jpeg", "image/png", "image/webp").contains(image.getContentType())))
-            errors.reject("image.invalid", "Ảnh phải là JPG, PNG, WEBP và nhỏ hơn 4 MB.");
-        if (errors.hasErrors()) { if (form.getId() != null) products.findById(form.getId()).ifPresent(p -> model.addAttribute("currentImage", p.getImageUrl())); return productForm(model); }
+        if (images.size() > 10) errors.reject("images.count", "Mỗi sản phẩm có thể tải lên tối đa 10 ảnh trong một lần.");
+        if (images.stream().anyMatch(image -> image.getSize() > 4_000_000 ||
+                !List.of("image/jpeg", "image/png", "image/webp").contains(image.getContentType())))
+            errors.reject("images.invalid", "Mỗi ảnh phải là JPG, PNG, WEBP và nhỏ hơn 4 MB.");
+        if (errors.hasErrors()) {
+            model.addAttribute("currentImages", form.getId() == null ? List.of() :
+                products.findById(form.getId()).map(Product::getImageUrls).orElse(List.of()));
+            return productForm(model);
+        }
         Product product = form.getId() == null ? new Product() : products.findById(form.getId()).orElse(null);
         if (product == null) { flash.addFlashAttribute("error", "Không tìm thấy sản phẩm."); return "redirect:/admin/products"; }
         product.setCategory(category); product.setName(form.getName().trim()); product.setDescription(form.getDescription());
         product.setPrice(form.getPrice()); product.setQuantity(form.getQuantity()); product.setSize(form.getSize()); product.setColor(form.getColor()); product.setStatus(form.getStatus());
-        if (image != null && !image.isEmpty()) {
+        if (!images.isEmpty()) {
+            List<java.nio.file.Path> savedImagePaths = new ArrayList<>();
             try {
                 java.nio.file.Files.createDirectories(uploadPath);
-                String extension = switch (image.getContentType()) { case "image/jpeg" -> ".jpg"; case "image/png" -> ".png"; default -> ".webp"; };
-                String fileName = UUID.randomUUID() + extension;
-                java.nio.file.Files.copy(image.getInputStream(), uploadPath.resolve(fileName));
-                product.setImageUrl("/uploads/" + fileName);
-            } catch (java.io.IOException exception) { flash.addFlashAttribute("error", "Không thể lưu ảnh tải lên."); return "redirect:/admin/products"; }
+                for (MultipartFile image : images) {
+                    String extension = switch (image.getContentType()) {
+                        case "image/jpeg" -> ".jpg";
+                        case "image/png" -> ".png";
+                        default -> ".webp";
+                    };
+                    String fileName = UUID.randomUUID() + extension;
+                    java.nio.file.Path imagePath = uploadPath.resolve(fileName);
+                    java.nio.file.Files.copy(image.getInputStream(), imagePath);
+                    savedImagePaths.add(imagePath);
+                    String imageUrl = "/uploads/" + fileName;
+                    if (product.getImageUrl() == null || product.getImageUrl().isBlank()) product.setImageUrl(imageUrl);
+                    else product.addImageUrl(imageUrl);
+                }
+            } catch (java.io.IOException exception) {
+                for (java.nio.file.Path savedImagePath : savedImagePaths) {
+                    try {
+                        java.nio.file.Files.deleteIfExists(savedImagePath);
+                    } catch (java.io.IOException cleanupException) {
+                        exception.addSuppressed(cleanupException);
+                    }
+                }
+                log.error("Unable to store uploaded product images", exception);
+                flash.addFlashAttribute("error", "Không thể lưu đầy đủ ảnh tải lên. Vui lòng kiểm tra thư mục uploads rồi thử lại.");
+                return "redirect:/admin/products";
+            }
         } else if (product.getImageUrl() == null) product.setImageUrl("https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=85");
         products.save(product); flash.addFlashAttribute("success", "Đã lưu sản phẩm."); return "redirect:/admin/products";
     }
@@ -167,5 +206,8 @@ public class AdminController {
         return "redirect:/admin/customers";
     }
 
-    private String productForm(Model model) { model.addAttribute("categories", categories.findAllByOrderByNameAsc()); return "admin/product-form"; }
+    private String productForm(Model model) {
+        model.addAttribute("categories", categories.findAllByOrderByNameAsc());
+        return "admin/product-form";
+    }
 }
